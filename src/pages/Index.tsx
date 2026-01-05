@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,8 @@ interface CartItem extends Product {
 const Index = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activeSection, setActiveSection] = useState('catalog');
+  const [flyingItems, setFlyingItems] = useState<{ id: string; startX: number; startY: number; image: string }[]>([]);
+  const cartButtonRef = useRef<HTMLButtonElement>(null);
 
   const products: Product[] = [
     { id: 1, name: 'Кожаная сумка Premium', price: 45900, image: 'https://cdn.poehali.dev/projects/d0f78ebd-0a66-4aed-b294-cf799199a658/files/ef5cce7c-0296-453c-af4c-fabea5d29d9e.jpg', category: 'Сумки', brand: 'LUXURY' },
@@ -31,7 +33,25 @@ const Index = () => {
     { id: 6, name: 'Спортивные часы Tech', price: 65000, image: 'https://cdn.poehali.dev/projects/d0f78ebd-0a66-4aed-b294-cf799199a658/files/616cd6eb-ffea-4069-8524-7d4001dcc6c2.jpg', category: 'Часы', brand: 'SPORT' },
   ];
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, event: React.MouseEvent<HTMLButtonElement>) => {
+    const button = event.currentTarget;
+    const buttonRect = button.getBoundingClientRect();
+    const cartRect = cartButtonRef.current?.getBoundingClientRect();
+
+    if (cartRect) {
+      const flyingId = `${product.id}-${Date.now()}`;
+      setFlyingItems(prev => [...prev, {
+        id: flyingId,
+        startX: buttonRect.left + buttonRect.width / 2,
+        startY: buttonRect.top + buttonRect.height / 2,
+        image: product.image
+      }]);
+
+      setTimeout(() => {
+        setFlyingItems(prev => prev.filter(item => item.id !== flyingId));
+      }, 800);
+    }
+
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -61,7 +81,34 @@ const Index = () => {
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-orange-50 relative">
+      {flyingItems.map(item => {
+        const cartRect = cartButtonRef.current?.getBoundingClientRect();
+        const endX = cartRect ? cartRect.left + cartRect.width / 2 : 0;
+        const endY = cartRect ? cartRect.top + cartRect.height / 2 : 0;
+
+        return (
+          <div
+            key={item.id}
+            className="fixed z-[100] pointer-events-none"
+            style={{
+              left: `${item.startX}px`,
+              top: `${item.startY}px`,
+              width: '60px',
+              height: '60px',
+              animation: 'flyToCart 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+              '--end-x': `${endX - item.startX}px`,
+              '--end-y': `${endY - item.startY}px`,
+            } as React.CSSProperties}
+          >
+            <img 
+              src={item.image} 
+              alt="Flying item" 
+              className="w-full h-full object-cover rounded-lg shadow-2xl"
+            />
+          </div>
+        );
+      })}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -98,7 +145,7 @@ const Index = () => {
 
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="relative">
+                <Button ref={cartButtonRef} variant="outline" size="icon" className="relative">
                   <Icon name="ShoppingCart" size={20} />
                   {totalItems > 0 && (
                     <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-gradient-to-r from-gradient-magenta to-gradient-orange border-0">
@@ -211,7 +258,7 @@ const Index = () => {
                         {product.price.toLocaleString()} ₽
                       </span>
                       <Button 
-                        onClick={() => addToCart(product)}
+                        onClick={(e) => addToCart(product, e)}
                         className="bg-gradient-to-r from-gradient-purple to-gradient-magenta hover:from-gradient-magenta hover:to-gradient-orange transition-all duration-300"
                       >
                         <Icon name="ShoppingBag" size={18} className="mr-2" />
