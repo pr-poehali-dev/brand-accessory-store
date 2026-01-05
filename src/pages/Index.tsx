@@ -3,6 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 
 interface Product {
@@ -22,6 +25,8 @@ const Index = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activeSection, setActiveSection] = useState('catalog');
   const [flyingItems, setFlyingItems] = useState<{ id: string; startX: number; startY: number; image: string }[]>([]);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [orderForm, setOrderForm] = useState({ fullName: '', phone: '', address: '' });
   const cartButtonRef = useRef<HTMLButtonElement>(null);
 
   const products: Product[] = [
@@ -154,7 +159,7 @@ const Index = () => {
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent className="w-full sm:max-w-lg">
+              <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle className="text-2xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>Корзина</SheetTitle>
                 </SheetHeader>
@@ -201,17 +206,99 @@ const Index = () => {
                           </div>
                         </Card>
                       ))}
-                      <div className="border-t pt-4 mt-4">
-                        <div className="flex justify-between text-lg font-bold mb-4">
-                          <span>Итого:</span>
-                          <span className="bg-gradient-to-r from-gradient-purple to-gradient-magenta bg-clip-text text-transparent">
-                            {totalPrice.toLocaleString()} ₽
-                          </span>
+                      {!showCheckout ? (
+                        <div className="border-t pt-4 mt-4">
+                          <div className="flex justify-between text-lg font-bold mb-4">
+                            <span>Итого:</span>
+                            <span className="bg-gradient-to-r from-gradient-purple to-gradient-magenta bg-clip-text text-transparent">
+                              {totalPrice.toLocaleString()} ₽
+                            </span>
+                          </div>
+                          <Button 
+                            onClick={() => setShowCheckout(true)}
+                            className="w-full bg-gradient-to-r from-gradient-purple via-gradient-magenta to-gradient-orange hover:opacity-90 transition-opacity" 
+                            size="lg"
+                          >
+                            Оформить заказ
+                          </Button>
                         </div>
-                        <Button className="w-full bg-gradient-to-r from-gradient-purple via-gradient-magenta to-gradient-orange hover:opacity-90 transition-opacity" size="lg">
-                          Оформить заказ
-                        </Button>
-                      </div>
+                      ) : (
+                        <div className="border-t pt-4 mt-4 space-y-4">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => setShowCheckout(false)}
+                            className="mb-2"
+                          >
+                            <Icon name="ArrowLeft" size={18} className="mr-2" />
+                            Назад к корзине
+                          </Button>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="fullName">ФИО</Label>
+                              <Input 
+                                id="fullName"
+                                placeholder="Иванов Иван Иванович"
+                                value={orderForm.fullName}
+                                onChange={(e) => setOrderForm(prev => ({ ...prev, fullName: e.target.value }))}
+                                className="mt-1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="phone">Телефон</Label>
+                              <Input 
+                                id="phone"
+                                type="tel"
+                                placeholder="+7 (999) 123-45-67"
+                                value={orderForm.phone}
+                                onChange={(e) => setOrderForm(prev => ({ ...prev, phone: e.target.value }))}
+                                className="mt-1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="address">Адрес доставки</Label>
+                              <Input 
+                                id="address"
+                                placeholder="г. Москва, ул. Примерная, д. 1, кв. 1"
+                                value={orderForm.address}
+                                onChange={(e) => setOrderForm(prev => ({ ...prev, address: e.target.value }))}
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
+
+                          <Separator className="my-4" />
+
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Товары ({totalItems} шт.)</span>
+                              <span>{totalPrice.toLocaleString()} ₽</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Доставка</span>
+                              <span>{totalPrice >= 50000 ? 'Бесплатно' : '500 ₽'}</span>
+                            </div>
+                            <Separator className="my-2" />
+                            <div className="flex justify-between text-lg font-bold">
+                              <span>Итого:</span>
+                              <span className="bg-gradient-to-r from-gradient-purple to-gradient-magenta bg-clip-text text-transparent">
+                                {(totalPrice >= 50000 ? totalPrice : totalPrice + 500).toLocaleString()} ₽
+                              </span>
+                            </div>
+                          </div>
+
+                          <Button 
+                            className="w-full bg-gradient-to-r from-gradient-purple via-gradient-magenta to-gradient-orange hover:opacity-90 transition-opacity" 
+                            size="lg"
+                            disabled={!orderForm.fullName || !orderForm.phone || !orderForm.address}
+                          >
+                            <Icon name="Check" size={18} className="mr-2" />
+                            Подтвердить заказ
+                          </Button>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
