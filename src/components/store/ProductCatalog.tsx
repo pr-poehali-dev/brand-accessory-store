@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,13 @@ interface ProductCatalogProps {
 }
 
 export const ProductCatalog = ({ products, onAddToCart }: ProductCatalogProps) => {
+  const [selectedCategory, setSelectedCategory] = useState<string>('Все');
+
+  const categories = ['Все', ...Array.from(new Set(products.map(p => p.category)))];
+  const filteredProducts = selectedCategory === 'Все' 
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
+
   return (
     <div className="animate-fade-in">
       <div className="text-center mb-12">
@@ -21,8 +29,21 @@ export const ProductCatalog = ({ products, onAddToCart }: ProductCatalogProps) =
         </p>
       </div>
 
+      <div className="flex justify-center gap-3 mb-8 flex-wrap">
+        {categories.map(category => (
+          <Button
+            key={category}
+            variant={selectedCategory === category ? 'default' : 'outline'}
+            onClick={() => setSelectedCategory(category)}
+            className={selectedCategory === category ? 'bg-gradient-to-r from-gradient-purple to-gradient-magenta hover:opacity-90' : ''}
+          >
+            {category}
+          </Button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {products.map(product => (
+        {filteredProducts.map(product => (
           <Card key={product.id} className="group overflow-hidden hover:shadow-2xl transition-all duration-300 animate-scale-in border-0">
             <div className="relative overflow-hidden">
               <img 
